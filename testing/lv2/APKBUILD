@@ -1,0 +1,28 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+pkgname=lv2
+pkgver=1.14.0
+pkgrel=0
+pkgdesc="open standard for audio plugins"
+url="http://lv2plug.in/"
+arch="all"
+license="ISC"
+makedepends=""
+subpackages="$pkgname-dev"
+source="http://lv2plug.in/spec/lv2-$pkgver.tar.bz2"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	./waf configure \
+		--prefix=/usr
+		
+	./waf build --verbose
+}
+
+package() {
+	cd "$builddir"
+	./waf install --destdir="$pkgdir"
+}
+
+sha512sums="6991d848ed9f04a48ca3070efc15af83431f680aa8a8559a02b1666f7b8d43af8e089f78c3b14ad3345dac32fd1c8ad0faf3a3f56dddc07c6f0e0aeef4077498  lv2-1.14.0.tar.bz2"

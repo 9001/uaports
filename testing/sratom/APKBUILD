@@ -1,0 +1,28 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+pkgname=sratom
+pkgver=0.6.2
+pkgrel=0
+pkgdesc="library for serialising LV2 atoms to/from RDF, particularly the Turtle syntax"
+url="http://drobilla.net/software/sratom"
+arch="all"
+license="ISC"
+makedepends="lv2-dev"
+subpackages="$pkgname-dev"
+source="http://download.drobilla.net/sratom-$pkgver.tar.bz2"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	./waf configure \
+		--prefix=/usr
+	
+	./waf build --verbose
+}
+
+package() {
+	cd "$builddir"
+	./waf install --destdir="$pkgdir"
+}
+
+sha512sums="356e1dfde07fcc3eff99186ff79501557572f5d73338fd096bf639a82d1d4fe3c0e790627c8eb088053e4a2aeed4e548aca0a5572d1ab26316cfdb13374f10ac  sratom-0.6.2.tar.bz2"

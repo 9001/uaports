@@ -1,0 +1,28 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+pkgname=sord
+pkgver=0.16.2
+pkgrel=0
+pkgdesc="lightweight C library for storing RDF statements in memory"
+url="http://drobilla.net/software/sord"
+arch="all"
+license="ISC"
+makedepends="lv2-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="http://download.drobilla.net/sord-$pkgver.tar.bz2"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	./waf configure \
+		--prefix=/usr
+	
+	./waf build --verbose
+}
+
+package() {
+	cd "$builddir"
+	./waf install --destdir="$pkgdir"
+}
+
+sha512sums="fe143c07ed18c15ffaf2461ca587df76e365a075f5d93f5eaa4c26196e0b1dd59d24d16e176de3664a2658377a2934083af5742c80884e8e7dd201dcaccb9698  sord-0.16.2.tar.bz2"

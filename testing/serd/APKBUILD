@@ -1,0 +1,28 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+pkgname=serd
+pkgver=0.30.0
+pkgrel=0
+pkgdesc="lightweight C library for RDF syntax which supports reading and writing Turtle, NTriples, TriG, and NQuads"
+url="http://drobilla.net/software/serd"
+arch="all"
+license="ISC"
+makedepends="lv2-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="http://download.drobilla.net/serd-$pkgver.tar.bz2"
+builddir="$srcdir/$pkgname-$pkgver"
+
+build() {
+	cd "$builddir"
+	./waf configure \
+		--prefix=/usr
+	
+	./waf build --verbose
+}
+
+package() {
+	cd "$builddir"
+	./waf install --destdir="$pkgdir"
+}
+
+sha512sums="23ff30f2d3dd622bdd65deee36cb92ae5f4a0c539cf32a1bd9802f2d7cf4aa3e96f25d2fe579277d1ab943f6d25c0be68d7b4863f83d4733f489462620a4c1bb  serd-0.30.0.tar.bz2"
