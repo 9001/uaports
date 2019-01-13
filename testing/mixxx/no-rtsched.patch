@@ -1,0 +1,32 @@
+diff -NarU5 mixxx-release-2.1.1/src/soundio/sounddeviceportaudio.cpp mixxx/src/soundio/sounddeviceportaudio.cpp
+--- mixxx-release-2.1.1/src/soundio/sounddeviceportaudio.cpp	2018-06-11 06:57:28.000000000 +0200
++++ mixxx/src/soundio/sounddeviceportaudio.cpp	2018-07-30 17:44:52.401067173 +0200
+@@ -312,28 +312,10 @@
+         return SOUNDDEVICE_ERROR_ERR;
+     } else {
+         qDebug() << "Opened PortAudio stream successfully... starting";
+     }
+ 
+-
+-#ifdef __LINUX__
+-    //Attempt to dynamically load and resolve stuff in the PortAudio library
+-    //in order to enable RT priority with ALSA.
+-    QLibrary portaudio("libportaudio.so.2");
+-    if (!portaudio.load())
+-       qWarning() << "Failed to dynamically load PortAudio library";
+-    else
+-       qDebug() << "Dynamically loaded PortAudio library";
+-
+-    EnableAlsaRT enableRealtime = (EnableAlsaRT) portaudio.resolve(
+-            "PaAlsa_EnableRealtimeScheduling");
+-    if (enableRealtime) {
+-        enableRealtime(pStream, 1);
+-    }
+-    portaudio.unload();
+-#endif
+-
+     // Start stream
+     err = Pa_StartStream(pStream);
+     if (err != paNoError) {
+         qWarning() << "PortAudio: Start stream error:" << Pa_GetErrorText(err);
+         m_lastError = QString::fromUtf8(Pa_GetErrorText(err));

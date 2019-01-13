@@ -1,0 +1,38 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-lsmashsource
+_sha=3edd194b1d82975cee67c0278556615c7d9ebd36
+pkgver=0.0.1_git20180331
+pkgrel=0
+pkgdesc="MP4 and MOV source plugin with in-memory indexing"
+url="https://github.com/VFR-maniac/L-SMASH-Works"
+arch="all"
+license="ISC"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="vapoursynth-dev lsmash-dev ffmpeg-dev bash"
+install=""
+subpackages=""
+source="vs-lsmashsource-$pkgver.tar.gz::https://github.com/VFR-maniac/L-SMASH-Works/archive/$_sha.tar.gz"
+builddir="$srcdir/L-SMASH-Works"
+
+prepare() {
+	mv "$builddir"-* "$builddir"
+	default_prepare
+}
+
+build() {
+	cd "$builddir/VapourSynth"
+	bash -x ./configure --prefix=/usr
+	make
+}
+
+package() {
+	cd "$builddir/VapourSynth"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="b4a769a11bbad16b09ce0652274563bf10bbe175cff928dd5efd0000f4dfd01ddcdd31b75c53c11bcb4d48b683104e29d467e8254fdbb9acbe8e12d375bc4f5d  vs-lsmashsource-0.0.1_git20180331.tar.gz"

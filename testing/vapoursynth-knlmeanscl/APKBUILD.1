@@ -1,0 +1,39 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-knlmeanscl
+pkgver=1.1.1
+pkgrel=0
+pkgdesc="OpenCL implementation of the Non-local means de-noising algorithm"
+url="https://github.com/Khanattila/KNLMeansCL"
+arch="all"
+license="GPL-3.0-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="meson vapoursynth-dev"
+install=""
+subpackages=""
+source="vs-knlmeanscl-$pkgver.tar.gz::https://github.com/Khanattila/KNLMeansCL/archive/v$pkgver.tar.gz"
+builddir="$srcdir/KNLMeansCL-$pkgver"
+
+build() {
+	cd "$builddir"
+	meson \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth \
+		--buildtype=release \
+		. output
+	ninja -C output
+}
+
+package() {
+	cd "$builddir"
+	DESTDIR="$pkgdir" ninja -C output install
+}
+
+sha512sums="7331dfaaf55bf75ff17d30258d65da1c6f405314e0661031756dab1f4320fe857714987bd75033c2704bd269d2750368d8a6a0be6424224f1fffd40664771c82  vs-knlmeanscl-1.1.1.tar.gz"

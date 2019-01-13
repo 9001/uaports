@@ -1,0 +1,96 @@
+#!/bin/sh
+set -e
+
+build() {
+	printf '\033[35m\nbuild %s\033[0m\n' $1
+	cd ~/aports/*/$1
+	rm -rf src pkg
+	t1=$(date +%s)
+	(
+		set -o pipefail
+		nice abuild -r 2>&1 | tee .buildlog
+	)
+	t2=$(date +%s)
+	echo $t1 $t2 $((t2-t1)) | tee -a .buildtime
+}
+
+install() {
+	printf '\033[35m\ninstall %s:\n' $1
+	
+	find ~/packages/ |
+	grep -E "x86_64/$1-([0-9]+\.|dev-|doc-|dbg-).*\.apk$" |
+	tee /tmp/ilist
+	printf '\033[0m'
+	
+	sudo apk add $(cat /tmp/ilist)
+}
+
+true ||
+{
+# apk del $(cat /etc/apk/world | grep -vE '^alpine-' | sed -r 's/>.*//'); cat /etc/apk/world
+
+echo
+cat /etc/apk/world |
+grep -vE '^alpine-' &&
+	exit 1 || continue
+
+true ||
+{
+find -name src.arc -delete
+find /home/ed/packages -name \*.apk -delete || true
+find /home/ed/packages -name APKINDEX.tar.gz -delete || true
+
+# 1st level
+build bchunk
+build lsmash
+build vamp-sdk
+build zimg
+build py2-pgen
+build py3-pgen
+
+# 2nd level
+#install py2-pgen
+#install py3-pgen
+#install vamp-sdk
+}
+build py-cython
+build rubberband
+
+# 3rd level
+#install py3-cython
+#install py-cython-dev
+#install rubberband
+#install zimg
+build mixxx
+build vapoursynth
+
+# 4th level
+#install vapoursynth
+build mpv
+build vapoursynth-bm3d
+build vapoursynth-continuityfixer
+build vapoursynth-d2vsource
+build vapoursynth-deblock264
+build vapoursynth-deblockpp7
+build vapoursynth-editor
+build vapoursynth-eedi3m
+}
+build vapoursynth-ffms2
+build vapoursynth-fieldhint
+build vapoursynth-fmtconv
+build vapoursynth-knlmeanscl
+build vapoursynth-lsmashsource
+build vapoursynth-mvtools
+build vapoursynth-nnedi3
+build vapoursynth-nnedi3cl
+build vapoursynth-scxvid
+
+# 5th level
+#install mpv
+#install vapoursynth-d2vsource
+#install vapoursynth-fieldhint
+#install vapoursynth-lsmashsource
+#install vapoursynth-scxvid
+build wobbly
+echo wow it worked
+

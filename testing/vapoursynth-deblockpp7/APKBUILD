@@ -1,0 +1,41 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-deblockpp7
+_ver=4
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="VapourSynth port of pp7 from MPlayer"
+url="https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7"
+arch="all"
+license="GPL-3.0-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="autoconf automake libtool vapoursynth-dev"
+install=""
+subpackages=""
+source="vs-deblockpp7-$pkgver.tar.gz::https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DeblockPP7/archive/r$_ver.tar.gz"
+builddir="$srcdir/VapourSynth-DeblockPP7-r$_ver"
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="58afb80f691a2634e460f3006cbee749d0af6dfe851500bda3b3ca175311c7bdb1a6e8404e887be81676fb41fe4b39e3b41d2b7b3b526294415ee4110e942ba7  vs-deblockpp7-0.4.0.tar.gz"

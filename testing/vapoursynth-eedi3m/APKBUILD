@@ -1,0 +1,41 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-eedi3m
+_ver=3
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="Optimized fork of the VS-bundled EEDI edge-oriented deinterlacer"
+url="https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI3"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="autoconf automake libtool vapoursynth-dev boost-dev opencl-headers opencl-icd-loader-dev"
+install=""
+subpackages=""
+source="vs-eedi3m-$pkgver.tar.gz::https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI3/archive/r$_ver.tar.gz"
+builddir="$srcdir/VapourSynth-EEDI3-r$_ver"
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="0a75e12931520b60b2942dc803f570aaadf3afc5f14460ec8b48e9e488535a363444c1575fca2652e3f47d5c3614aa1a66b85e6ee01cb69757a707bdd4ac6505  vs-eedi3m-0.3.0.tar.gz"

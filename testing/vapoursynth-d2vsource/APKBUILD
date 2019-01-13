@@ -1,0 +1,41 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-d2vsource
+_ver=1.1
+pkgver=$_ver.0
+pkgrel=0
+pkgdesc="D2V parser and decoder for VapourSynth"
+url="https://github.com/dwbuiten/d2vsource"
+arch="all"
+license="LGPL-2.1-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="autoconf automake libtool vapoursynth-dev ffmpeg-dev"
+install=""
+subpackages=""
+source="vs-d2vsource-$pkgver.tar.gz::https://github.com/dwbuiten/d2vsource/archive/v$_ver.tar.gz"
+builddir="$srcdir/d2vsource-$_ver"
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="b89acd843bce03d56498c9f950faac4cb299edf440f8ed77471992e8ca3c00a469f47ff2574850c1655530d116f54a8eebd084c3d699bb4f2e17711b34b37bdb  vs-d2vsource-1.1.0.tar.gz"

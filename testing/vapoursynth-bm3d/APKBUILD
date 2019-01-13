@@ -1,0 +1,33 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-bm3d
+_ver=7
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="V-BM3D denoising filter for VapourSynth"
+url="https://github.com/HomeOfVapourSynthEvolution/VapourSynth-BM3D"
+arch="all"
+license="MIT"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="vapoursynth-dev fftw-dev"
+install=""
+subpackages=""
+source="vs-bm3d-$pkgver.tar.gz::https://github.com/HomeOfVapourSynthEvolution/VapourSynth-BM3D/archive/r7.tar.gz"
+builddir="$srcdir/VapourSynth-BM3D-r$_ver"
+
+build() {
+	cd "$builddir"
+	./configure --install="$pkgdir/usr/lib/vapoursynth"
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 install
+}
+
+sha512sums="1d239196750d124e94c73d3ff38164941b5e296221deeec547b85082800dde21a2b3e383386eb285b0bf9041ec4e803b822bd1166a488feb6fe5123795df9b0e  vs-bm3d-0.7.0.tar.gz"

@@ -1,0 +1,284 @@
+--- mixxx-release-2.1.1-org/src/engine/enginesidechaincompressor.cpp
++++ mixxx-release-2.1.1-mod/src/engine/enginesidechaincompressor.cpp
+@@ -1,18 +1,19 @@
+ #include <QtDebug>
+ 
+ #include "engine/enginesidechaincompressor.h"
+ 
+ EngineSideChainCompressor::EngineSideChainCompressor(const char* group)
+         : m_compressRatio(0.0),
+-          m_bAboveThreshold(false),
+           m_threshold(1.0),
+           m_strength(0.0),
+           m_attackTime(0),
++          m_sustainTime(0),
+           m_decayTime(0),
++          m_sustainAge(0),
+           m_attackPerFrame(0.0),
+           m_decayPerFrame(0.0) {
+     Q_UNUSED(group);
+ }
+ 
+ void EngineSideChainCompressor::calculateRates() {
+     // Don't allow completely zero rates, or else if parameters change
+@@ -35,29 +36,38 @@
+         m_decayPerFrame = 0.005;
+     }
+     qDebug() << "Compressor attack per frame: " << m_attackPerFrame
+              << "decay per frame: " << m_decayPerFrame;
+ }
+ 
+ void EngineSideChainCompressor::clearKeys() {
+-    m_bAboveThreshold = false;
++    // noop
+ }
+ 
+ void EngineSideChainCompressor::processKey(const CSAMPLE* pIn, const int iBufferSize) {
++    if (m_sustainAge > 0)
++		m_sustainAge--;
++		
+     for (int i = 0; i + 1 < iBufferSize; i += 2) {
+         CSAMPLE val = (pIn[i] + pIn[i + 1]) / 2;
+         if (val > m_threshold) {
+-            m_bAboveThreshold = true;
++            m_sustainedSample = val;
++            m_sustainAge = m_sustainTime;
+             return;
+         }
+     }
+ }
+ 
+ double EngineSideChainCompressor::calculateCompressedGain(int frames) {
+-    if (m_bAboveThreshold) {
++    if (m_sustainAge > 0) {
++		if (m_sustainAge >= frames)
++			m_sustainAge -= frames;
++		else
++			m_sustainAge = 0;
++		
+         if (m_compressRatio < m_strength) {
+             m_compressRatio += m_attackPerFrame * frames;
+             if (m_compressRatio > m_strength) {
+                 // If we overshot, clamp.
+                 m_compressRatio = m_strength;
+             }
+         } else if (m_compressRatio > m_strength) {
+--- mixxx-release-2.1.1-org/src/engine/enginesidechaincompressor.h
++++ mixxx-release-2.1.1-mod/src/engine/enginesidechaincompressor.h
+@@ -5,21 +5,24 @@
+ 
+ class EngineSideChainCompressor {
+   public:
+     EngineSideChainCompressor(const char* group);
+     virtual ~EngineSideChainCompressor() { };
+ 
+     void setParameters(CSAMPLE threshold, CSAMPLE strength,
+-                       unsigned int attack_time, unsigned int decay_time) {
++                       unsigned int attack_time,
++                       unsigned int sustain_time,
++                       unsigned int decay_time) {
+         // TODO(owilliams): There is a race condition here because the parameters
+         // are not updated atomically.  This function should instead take a
+         // struct.
+         m_threshold = threshold;
+         m_strength = strength;
+         m_attackTime = attack_time;
++        m_sustainTime = sustain_time;
+         m_decayTime = decay_time;
+         calculateRates();
+     }
+ 
+     void setThreshold(CSAMPLE threshold) {
+         m_threshold = threshold;
+         calculateRates();
+@@ -31,14 +34,19 @@
+     }
+ 
+     void setAttackTime(unsigned int attack_time) {
+         m_attackTime = attack_time;
+         calculateRates();
+     }
+ 
++    void setSustainTime(unsigned int sustain_time) {
++        m_sustainTime = sustain_time;
++        calculateRates();
++    }
++
+     void setDecayTime(unsigned int decay_time) {
+         m_decayTime = decay_time;
+         calculateRates();
+     }
+ 
+ 
+     // Before calling processKey on multiple channels, first call clearKeys to
+@@ -60,28 +68,34 @@
+     // Update the attack and decay rates.
+     void calculateRates();
+ 
+     // The current ratio the signal is being compressed.  This is the same as m_strength
+     // when the compressor is at maximum engagement (not attacking or decaying).
+     CSAMPLE m_compressRatio;
+ 
+-    // True if the input signal is above the threshold.
+-    bool m_bAboveThreshold;
+-
+     // The sample value above which the compressor is triggered.
+     CSAMPLE m_threshold;
+ 
++    // The most recent sample above m_threshold
++    CSAMPLE m_sustainedSample;
++
+     // The largest ratio the signal can be compressed.
+     CSAMPLE m_strength;
+ 
+     // The length of time, in frames (samples/2), until maximum compression is reached.
+     unsigned int m_attackTime;
+ 
+     // The length of time, in frames, until compression is completely off.
++    unsigned int m_sustainTime;
++
++    // The length of time, in frames, until compression is completely off.
+     unsigned int m_decayTime;
++    
++    // The remaining lifetime of m_sustainedSample;
++    unsigned int m_sustainAge;
+ 
+     // These are the delta compression values per sample based on the strengths and timings.
+     CSAMPLE m_attackPerFrame;
+     CSAMPLE m_decayPerFrame;
+ };
+ 
+ #endif
+--- mixxx-release-2.1.1-org/src/engine/enginetalkoverducking.cpp
++++ mixxx-release-2.1.1-mod/src/engine/enginetalkoverducking.cpp
+@@ -1,17 +1,26 @@
+ #include "control/controlproxy.h"
+ #include "engine/enginetalkoverducking.h"
+ 
+-#define DUCK_THRESHOLD 0.1
++void EngineTalkoverDucking::hack(double mode) {
++	if (mode == EngineTalkoverDucking::MANUAL) {
++		m_DuckThreshold = 0.00001;
++		m_AttackFraction = 0.5;
++	} else {
++		m_AttackFraction = 0.1;
++		m_DuckThreshold = 0.1;
++	}
++}
+ 
+ EngineTalkoverDucking::EngineTalkoverDucking(
+         UserSettingsPointer pConfig, const char* group)
+     : EngineSideChainCompressor(group),
+       m_pConfig(pConfig),
+       m_group(group) {
++	hack(42);
+     m_pMasterSampleRate = new ControlProxy(m_group, "samplerate", this);
+     m_pMasterSampleRate->connectValueChanged(SLOT(slotSampleRateChanged(double)),
+                                              Qt::DirectConnection);
+ 
+     m_pDuckStrength = new ControlPotmeter(ConfigKey(m_group, "duckStrength"), 0.0, 1.0);
+     m_pDuckStrength->set(
+             m_pConfig->getValue<double>(ConfigKey(m_group, "duckStrength"), 90) / 100);
+@@ -19,61 +28,76 @@
+             this, SLOT(slotDuckStrengthChanged(double)),
+             Qt::DirectConnection);
+ 
+     // We only allow the strength to be configurable for now.  The next most likely
+     // candidate for customization is the threshold, which may be too low for
+     // noisy club situations.
+     setParameters(
+-            DUCK_THRESHOLD,
++            m_DuckThreshold,
+             m_pDuckStrength->get(),
+-            m_pMasterSampleRate->get() / 2 * .1,
++            m_pMasterSampleRate->get() / 2 * m_AttackFraction,
++            m_pMasterSampleRate->get() / 2 * 0.2,
+             m_pMasterSampleRate->get() / 2);
+ 
++    double duckMode = m_pConfig->getValue<double>(
++            ConfigKey(m_group, "duckMode"), AUTO);
++            
+     m_pTalkoverDucking = new ControlPushButton(ConfigKey(m_group, "talkoverDucking"));
+     m_pTalkoverDucking->setButtonMode(ControlPushButton::TOGGLE);
+     m_pTalkoverDucking->setStates(3);
+-    m_pTalkoverDucking->set(
+-            m_pConfig->getValue<double>(
+-                ConfigKey(m_group, "duckMode"), AUTO));
++    m_pTalkoverDucking->set(duckMode);
+     connect(m_pTalkoverDucking, SIGNAL(valueChanged(double)),
+             this, SLOT(slotDuckModeChanged(double)),
+             Qt::DirectConnection);
++    
++    hack(duckMode);
+ }
+ 
+ EngineTalkoverDucking::~EngineTalkoverDucking() {
+     m_pConfig->set(ConfigKey(m_group, "duckStrength"), ConfigValue(m_pDuckStrength->get() * 100));
+     m_pConfig->set(ConfigKey(m_group, "duckMode"), ConfigValue(m_pTalkoverDucking->get()));
+ 
+     delete m_pDuckStrength;
+     delete m_pTalkoverDucking;
+ }
+ 
+ void EngineTalkoverDucking::slotSampleRateChanged(double samplerate) {
+     setParameters(
+-            DUCK_THRESHOLD, m_pDuckStrength->get(),
+-            samplerate / 2 * .1, samplerate / 2);
++            m_DuckThreshold, m_pDuckStrength->get(),
++            samplerate / 2 * m_AttackFraction,
++            samplerate / 2 * 0.2,
++            samplerate / 2);
+ }
+ 
+ void EngineTalkoverDucking::slotDuckStrengthChanged(double strength) {
+     setParameters(
+-            DUCK_THRESHOLD, strength,
+-            m_pMasterSampleRate->get() / 2 * .1, m_pMasterSampleRate->get() / 2);
++            m_DuckThreshold, strength,
++            m_pMasterSampleRate->get() / 2 * m_AttackFraction,
++            m_pMasterSampleRate->get() / 2 * 0.2,
++            m_pMasterSampleRate->get() / 2);
+     m_pConfig->set(ConfigKey(m_group, "duckStrength"), ConfigValue(strength * 100));
+ }
+ 
+ void EngineTalkoverDucking::slotDuckModeChanged(double mode) {
+-   m_pConfig->set(ConfigKey(m_group, "duckMode"), ConfigValue(mode));
++	hack(mode);
++	setParameters(
++			m_DuckThreshold, m_pDuckStrength->get(),
++			m_pMasterSampleRate->get() / 2 * m_AttackFraction,
++			m_pMasterSampleRate->get() / 2 * 0.2,
++			m_pMasterSampleRate->get() / 2);
++	m_pConfig->set(ConfigKey(m_group, "duckMode"), ConfigValue(mode));
+ }
+ 
+ CSAMPLE EngineTalkoverDucking::getGain(int numFrames) {
+     // Apply microphone ducking.
+     switch (getMode()) {
+       case EngineTalkoverDucking::OFF:
+         return 1.0;
+       case EngineTalkoverDucking::AUTO:
+         return calculateCompressedGain(numFrames);
+       case EngineTalkoverDucking::MANUAL:
+-        return m_pDuckStrength->get();
++        //return m_pDuckStrength->get();
++        return calculateCompressedGain(numFrames);
+     }
+     qWarning() << "Invalid ducking mode, returning 1.0";
+     return 1.0;
+ }
+--- mixxx-release-2.1.1-org/src/engine/enginetalkoverducking.h
++++ mixxx-release-2.1.1-mod/src/engine/enginetalkoverducking.h
+@@ -32,8 +32,12 @@
+   private:
+     UserSettingsPointer m_pConfig;
+     const char* m_group;
+ 
+     ControlProxy* m_pMasterSampleRate;
+     ControlPotmeter* m_pDuckStrength;
+     ControlPushButton* m_pTalkoverDucking;
++    
++    double m_DuckThreshold;
++    double m_AttackFraction;
++    void hack(double);
+ };

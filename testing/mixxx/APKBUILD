@@ -1,0 +1,87 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=mixxx
+pkgver=2.1.1
+pkgrel=0
+pkgdesc="DJ / livemixing / radio broadcasting studio"
+url="https://www.mixxx.org/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="icu-libs qt-sqlite"
+depends_dev=""
+makedepends="scons qt-dev upower-dev libshout-dev libusb-dev libmad-dev
+	libid3tag-dev chromaprint-dev protobuf-dev glu-dev taglib-dev
+	rubberband-dev portaudio-dev portmidi-dev vamp-sdk-dev
+	ffmpeg-dev libsndfile-dev flac-dev icu-libs xvfb qt-sqlite"
+install="$pkgname.post-install"
+subpackages="$pkgname-doc"
+source="https://github.com/mixxxdj/mixxx/archive/release-$pkgver.tar.gz
+	no-rtsched.patch"
+builddir="$srcdir/mixxx-release-$pkgver"
+_scons_args="
+	optimize=portable
+	build=release
+	prefix=/usr
+	qtdir=/usr
+	test=1
+	mad=1
+	ffmpeg=1
+	localecompare=1
+	qt_sqlite_plugin=0
+	virtualize=0
+	qt5=0
+	-j $JOBS"
+
+build() {
+	# START DEBUG
+	if [ -e "$startdir/src.arc" ]; then
+		rm -rf "$srcdir"
+		mkdir -p "$srcdir"
+		cd "$startdir"
+		tar -zxf "$startdir/src.arc"
+	fi
+	#END DEBUG
+
+	cd "$startdir"/hacks
+	find -type f | while IFS= read -r x; do
+		cat "$x" > "$builddir/$x"
+	done
+	
+	cd "$builddir"
+	scons \
+		$_scons_args \
+		install_root="$pkgdir/usr"
+	
+	# START DEBUG
+	if [ ! -e "$startdir/src.arc" ]; then
+		rm "$startdir/src.arc" || true
+		tar --xattrs -czf "$startdir/src.arc" -C "$startdir" src
+	fi
+	# END DEBUG
+}
+
+check() {
+	cd "$builddir"
+	/bin/sh "$startdir"/x.sh \
+		./mixxx-test
+}
+
+package() {
+	cd "$builddir"
+	scons \
+		$_scons_args \
+		install_root="$pkgdir/usr" \
+		install
+	
+	# the test binary is useless without the in-tree test data
+	rm "$pkgdir/usr/bin/mixxx-test"
+	
+	# snd-seq provides /dev/snd/seq for midi controllers
+	mkdir -p "$pkgdir/etc/modules-load.d"
+	echo snd-seq > "$pkgdir/etc/modules-load.d/mixxx.conf"
+}
+
+sha512sums="c0047a238bf39e464f2bc25646ba03138d0b8d27cde667ca7b12bfba5f40d339ce4b426853e048d695b2c59c847e88322e27b91bead467899d7bf1cb43358f20  release-2.1.1.tar.gz
+2092c137977f75d1a37c71ed1f2f9dc0ae58ba9437324a535a458009f538b7fc1882701a25ac2af9654a607de5a724bf77e270e85b3157f158be8dc16f5bd195  no-rtsched.patch"

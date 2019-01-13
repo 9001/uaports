@@ -1,0 +1,41 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=rubberband
+pkgver=1.8.2
+pkgrel=0
+pkgdesc="Audio time-stretching and pitch-shifting"
+url="https://breakfastquay.com/rubberband/"
+arch="all"
+license="GPL-2.0-or-later"
+depends=""
+depends_dev=""
+makedepends="vamp-sdk-dev openjdk8 libsamplerate-dev libsndfile-dev fftw-dev ladspa-dev"
+install=""
+subpackages="$pkgname-dev"
+source="https://breakfastquay.com/files/releases/rubberband-1.8.2.tar.bz2"
+builddir="$srcdir/rubberband-$pkgver"
+
+build() {
+	cd "$builddir"
+	
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+	
+	JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk" \
+	make jni
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="da677f9a843711c44c52c0153faa62e587ac7c010569523ef4fef7ce941b9d292e566f46147700e496f6cfff4c9f22f9901dcc93f2d701fdb9de152ddac0c3a6  rubberband-1.8.2.tar.bz2"

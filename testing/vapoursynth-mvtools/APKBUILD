@@ -1,0 +1,40 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-mvtools
+_ver=20
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="Motion estimation and compensation toolkit"
+url="https://github.com/dubhater/vapoursynth-mvtools"
+arch="all"
+license="GPL-2.0-or-later"
+depends=""
+depends_dev=""
+makedepends="autoconf automake libtool vapoursynth-dev fftw-dev nasm"
+install=""
+subpackages=""
+source="vs-mvtools-$pkgver.tar.gz::https://github.com/dubhater/vapoursynth-mvtools/archive/v$_ver.tar.gz"
+builddir="$srcdir/$pkgname-$_ver"
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="1562799952d8ad1be100b46ead97223fb4857d7393e3a1fd43db5730e09b66ff5da2e0a82d7f2fcf6653d003a4ffb6b10945834d7805cfc2f7ad810d32c5edad  vs-mvtools-0.20.0.tar.gz"

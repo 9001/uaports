@@ -1,0 +1,46 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-editor
+_ver=18
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="IDE for working with VapourSynth scripts"
+url="https://bitbucket.org/mystery_keeper/vapoursynth-editor/overview"
+arch="all"
+license="MIT"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="vapoursynth-dev qt5-qtbase-dev qt5-qtwebsockets-dev"
+install=""
+subpackages="$pkgname-doc"
+source="vs-editor-$pkgver.tar.gz::https://bitbucket.org/mystery_keeper/vapoursynth-editor/get/r$_ver.tar.gz"
+builddir="$srcdir/mystery_keeper-vapoursynth-editor"
+
+prepare() {
+	mv "$builddir"-* "$builddir"
+	default_prepare
+}
+
+build() {
+	cd "$builddir/pro"
+	/usr/lib/qt5/bin/qmake -norecursive pro.pro CONFIG+=release
+	make
+}
+
+package() {
+	cd "$builddir/build/release-64bit-gcc/"
+	
+	_bin="$pkgdir/usr/bin"
+	_doc="$pkgdir/usr/share/doc/$pkgname"
+
+	mkdir -p "$_bin"
+	mv vsedit vsedit-job-* "$_bin"
+	
+	mkdir -p "$_doc"
+	mv CHANGELOG LICENSE README "$_doc"
+}
+
+sha512sums="9aa9c7b13f943d881e174f9e7c61dc2c9afe038e9ed7c0f03c7b693f9285229d19bd40c20f46c0fcc85fc0962c0f70e255e2804134845dc16c05e7b93c927ed4  vs-editor-0.18.0.tar.gz"

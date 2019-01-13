@@ -1,0 +1,36 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-continuityfixer
+_ver=6
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="Repair damaged borders in video frames"
+url="https://github.com/MonoS/VS-ContinuityFixer"
+arch="all"
+license="UNKNOWN"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="vapoursynth-dev"
+install=""
+subpackages=""
+source="vs-continuityfixer-$pkgver.tar.gz::https://github.com/MonoS/VS-ContinuityFixer/archive/V$_ver.tar.gz"
+builddir="$srcdir/VS-ContinuityFixer-$_ver"
+
+build() {
+	cd "$builddir"
+	g++ -I/usr/include/vapoursynth -fPIC -c continuity.cpp -O2 -msse2 -mfpmath=sse -o continuity.o
+	g++ -shared -o continuity.so continuity.o
+}
+
+package() {
+	cd "$builddir"
+	_vs="$pkgdir/usr/lib/vapoursynth"
+	
+	mkdir -p "$_vs"
+	mv continuity.so "$_vs/"
+}
+
+sha512sums="df406a5c41de37fd526fe18c06ae4f7ce4edeb63f4cb5129676254fd2968684939f4e46da50df33a138ce083319ec7cd3004b9106ef2149ae6f7f35f46eac343  vs-continuityfixer-0.6.0.tar.gz"

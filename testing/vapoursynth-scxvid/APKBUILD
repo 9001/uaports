@@ -1,0 +1,41 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-scxvid
+_ver=1
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="Scene change detection plugin built on Xvid"
+url="https://github.com/dubhater/vapoursynth-scxvid"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="autoconf automake libtool vapoursynth-dev xvidcore-dev"
+install=""
+subpackages=""
+source="vs-scxvid-$pkgver.tar.gz::https://github.com/dubhater/vapoursynth-scxvid/archive/v$_ver.tar.gz"
+builddir="$srcdir/$pkgname-$_ver"
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="cb7fe7982779d40b936a94b78ddf82303e8ab1c5f3b11770c03e591565fb022712bd2427993ee3f1bda5081100632fd689c4c5ea80bf4873032e1bbb24142536  vs-scxvid-0.1.0.tar.gz"

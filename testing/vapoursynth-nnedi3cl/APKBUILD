@@ -1,0 +1,41 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+# TODO: ensure all dependencies
+pkgname=vapoursynth-nnedi3cl
+_ver=7
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="OpenCL intra-field only deinterlacer"
+url="https://github.com/HomeOfVapourSynthEvolution/VapourSynth-NNEDI3CL"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="autoconf automake libtool vapoursynth-dev boost-dev opencl-headers opencl-icd-loader-dev"
+install=""
+subpackages=""
+source="vs-nnedi3cl-$pkgver.tar.gz::https://github.com/HomeOfVapourSynthEvolution/VapourSynth-NNEDI3CL/archive/r$_ver.tar.gz"
+builddir="$srcdir/VapourSynth-NNEDI3CL-r$_ver"
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--libdir=/usr/lib/vapoursynth
+	make
+}
+
+package() {
+	cd "$builddir"
+	make -j1 DESTDIR="$pkgdir" install
+}
+
+sha512sums="0eb0c82587a715f99472c5b3e064f2872a12910dc90ad726d28abe57e42d7747f46c775079a502a8b9fed7797212d73a84e23e4298787148d09a1d47e65d7670  vs-nnedi3cl-0.7.0.tar.gz"

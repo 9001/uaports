@@ -1,0 +1,39 @@
+# Contributor: Stuart Cardall <developer@it-offshore.co.uk>
+# Maintainer: Stuart Cardall <developer@it-offshore.co.uk>
+pkgname=py2-pgen
+pkgver=2.7.10
+pkgrel=0
+pkgdesc="Python Parser Generator (for python2)"
+url="http://www.python.org"
+replaces="py-pgen"
+arch="all"
+license="custom"
+options="!check"  # no test suite
+makedepends="$depends_dev"
+source="http://www.python.org/ftp/python/$pkgver/Python-$pkgver.tar.xz"
+builddir="$srcdir/Python-$pkgver"
+
+build() {
+	cd "$builddir"
+	export OPT="$CFLAGS -DTHREAD_STACK_SIZE=0x100000"
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--enable-shared \
+		--with-threads \
+		--enable-ipv6 \
+		--with-system-ffi \
+		--with-system-expat \
+		--with-system-zlib \
+		--enable-unicode=ucs4
+	make Parser/pgen
+}
+
+package() {
+	cd "$builddir"
+	mkdir -p "$pkgdir"/usr/bin
+	install -Dm755 Parser/pgen "$pkgdir"/usr/bin/pgen
+}
+
+sha512sums="67615a6defbcda062f15a09f9dd3b9441afd01a8cc3255e5bc45b925378a0ddc38d468b7701176f6cc153ec52a4f21671b433780d9bde343aa9b9c1b2ae29feb  Python-2.7.10.tar.xz"
