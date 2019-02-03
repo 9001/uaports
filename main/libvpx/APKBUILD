@@ -1,0 +1,49 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libvpx
+pkgver=1.7.0
+pkgrel=0
+pkgdesc="Library for the vp8/vp9 codecs"
+url="https://www.webmproject.org/"
+arch="all"
+license="GPL"
+depends=""
+makedepends="coreutils yasm bash perl"
+subpackages="$pkgname-dev $pkgname-utils"
+source="$pkgname-$pkgver.tar.gz::https://chromium.googlesource.com/webm/$pkgname/+archive/v$pkgver.tar.gz
+	fix-arm-float-abi.patch
+	"
+
+builddir="$srcdir"
+build() {
+	cd "$builddir"
+	# build fix for arm
+	export CROSS=" "
+	bash ./configure \
+		--enable-pic \
+		--enable-libs \
+		--enable-runtime-cpu-detect \
+		--enable-vp8 \
+		--enable-vp9 \
+		--enable-shared \
+		--disable-install-srcs \
+		--enable-postproc
+	make
+}
+
+package() {
+	cd "$builddir"
+	make DIST_DIR="$pkgdir"/usr install
+	chmod 644 "$pkgdir"/usr/include/vpx/*.h \
+		"$pkgdir"/usr/lib/pkgconfig/*
+	chown root:root -R "$pkgdir"
+	chmod 755 "$pkgdir"/usr/lib/*
+}
+
+utils() {
+	pkgdesc="VP8/VP9 utilities and tools"
+	install -d "$subpkgdir"/usr
+	mv "$pkgdir"/usr/bin "$subpkgdir"/usr/
+}
+
+sha512sums="9bc21f8325f92175688570f10cbc4957d9c3354480d7064f124902b378860ca900395da482f14a75d6879da618a17f964de43e634e3806def58c4ed35c3b83a0  libvpx-1.7.0.tar.gz
+4eadbc2f4eb68eaff35cf85515aef271d6fd47293a53cba7b7a6e9e0fb71106dfb5ded45b9e9ba83264a91846e4a5fa4db42e39fc3eaff6ac37769e622f90f6c  fix-arm-float-abi.patch"

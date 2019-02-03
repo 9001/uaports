@@ -27,6 +27,8 @@ package() {
 	cd "$builddir"
 	mkdir -p "$pkgdir/usr/bin"
 	mv scxvid "$pkgdir/usr/bin"
+	chown root:root -R "$pkgdir"
+	chmod 755 "$pkgdir"/usr/lib/*
 }
 
 sha512sums="e9177255064aafce2d23a7509f54c2d48d0984ceaee39356fc3c3d7c0a0c6069ff84c5a0df8d8bf30717fec4a10e2f7a4e7a7f4c3dbe499e6fe6b1c7283cbc05  scxvid-0.1.0.tar.gz"

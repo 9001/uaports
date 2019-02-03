@@ -1,0 +1,67 @@
+# Contributor: Carlo Landmeter <clandmeter@gmail.com>
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer:
+pkgname=opencv
+pkgver=4.0.1
+pkgrel=0
+pkgdesc="Computer vision and machine learning software library"
+url="http://opencv.org"
+arch="all"
+license="BSD"
+depends=""
+depends_dev=""
+makedepends="cmake ffmpeg-dev libpng-dev libjpeg-turbo-dev tiff-dev jasper-dev
+	libgomp openexr-dev gtk+3.0-dev gtk+-dev gst-plugins-base-dev
+	libgphoto2-dev v4l-utils-dev libwebp-dev libdc1394-dev doxygen
+	python2-dev python3-dev protobuf-dev protobuf-c-dev openblas-dev
+	py-numpy py-numpy-dev"
+install=""
+subpackages="$pkgname-dev $pkgname-libs"
+source="opencv-$pkgver.tar.gz::https://github.com/opencv/opencv/archive/$pkgver.tar.gz"
+builddir="$srcdir/opencv-$pkgver"
+
+prepare() {
+	default_prepare || return 1
+	# purge most 3rd party libs
+	for i in "$builddir"/3rdparty/*; do
+		case $i in
+		*/carotene*) continue;;  # not packaged by us
+		*/ittnotify*) continue;; # not packaged by us
+		*/quirc*) continue;;     # not packaged by us
+		*/protobuf*) continue;;  # not compatible with our version
+		esac
+		rm -rf "$i"
+	done
+}
+
+build() {
+	cd "$builddir"
+	mkdir b
+	cd b
+	if [ "$CARCH" != "x86_64" ]; then
+		local _sse="-DENABLE_SSE=OFF -DENABLE_SSE2=OFF"
+	fi
+	cmake \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+		-DCMAKE_C_FLAGS="$CFLAGS" \
+		-DENABLE_PRECOMPILED_HEADERS=OFF \
+		-DWITH_OPENMP=ON \
+		-WITH_OPENCL=ON \
+		-DWITH_IPP=OFF \
+		$_sse \
+		.. \
+		|| return 1
+	make || return 1
+	# -DBUILD_PROTOBUF=OFF
+}
+
+package() {
+	cd "$builddir/b"
+	make DESTDIR="$pkgdir" install || return 1
+}
+
+sha512sums="d74dd325029a67676dd2c7fdbecb2b14cb531441b2a1b74fc1ebe6db096ea87c12801c8b997ebbe280fbd401311c0220133a0c29911b0dae82cb93453be0b2b0  opencv-4.0.1.tar.gz"
