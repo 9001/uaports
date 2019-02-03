@@ -7,23 +7,23 @@ pkgdesc="C library to make the use of LV2 plugins as simple as possible for appl
 url="http://drobilla.net/software/lilv"
 arch="all"
 license="ISC"
-makedepends="lv2-dev serd-dev sord-dev sratom-dev"
+makedepends="lv2-dev serd-dev sord-dev sratom-dev python3"
 subpackages="$pkgname-dev $pkgname-doc"
 source="http://download.drobilla.net/lilv-$pkgver.tar.bz2"
 builddir="$srcdir/$pkgname-$pkgver"
 
 build() {
 	cd "$builddir"
-	./waf configure \
+	python3 waf configure \
 		--prefix=/usr \
 		--python=/usr/bin/python3
 	
-	./waf build --verbose
+	python3 waf build --verbose
 }
 
 package() {
 	cd "$builddir"
-	./waf install --destdir="$pkgdir"
+	python3 waf install --destdir="$pkgdir"
 }
 
 sha512sums="cb909c83dbac36b51a206fe508aec51e52ddf068f9a159d053888594402def8d140aae0d9e1e1866e722396f7ec8dea4b86d4c1b958f56eb3193b78307918a89  lilv-0.24.4.tar.bz2"

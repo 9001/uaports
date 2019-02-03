@@ -1,0 +1,32 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: test on grsec
+pkgname=scxvid
+_ver=1
+pkgver=0.$_ver.0
+pkgrel=0
+pkgdesc="Scene change detection built on Xvid"
+url="https://github.com/soyokaze/SCXvid-standalone"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check"
+depends=""
+depends_dev=""
+makedepends="xvidcore-dev"
+install=""
+subpackages=""
+source="$pkgname-$pkgver.tar.gz::https://github.com/soyokaze/SCXvid-standalone/archive/r$_ver.tar.gz"
+builddir="$srcdir/SCXvid-standalone-r$_ver"
+
+build() {
+	cd "$builddir"
+	cc -o scxvid scxvid.c -lxvidcore
+}
+
+package() {
+	cd "$builddir"
+	mkdir -p "$pkgdir/usr/bin"
+	mv scxvid "$pkgdir/usr/bin"
+}
+
+sha512sums="e9177255064aafce2d23a7509f54c2d48d0984ceaee39356fc3c3d7c0a0c6069ff84c5a0df8d8bf30717fec4a10e2f7a4e7a7f4c3dbe499e6fe6b1c7283cbc05  scxvid-0.1.0.tar.gz"

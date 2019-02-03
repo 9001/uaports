@@ -7,22 +7,22 @@ pkgdesc="open standard for audio plugins"
 url="http://lv2plug.in/"
 arch="all"
 license="ISC"
-makedepends=""
+makedepends="python3"
 subpackages="$pkgname-dev"
 source="http://lv2plug.in/spec/lv2-$pkgver.tar.bz2"
 builddir="$srcdir/$pkgname-$pkgver"
 
 build() {
 	cd "$builddir"
-	./waf configure \
+	python3 waf configure \
 		--prefix=/usr
-		
-	./waf build --verbose
+	
+	python3 waf build --verbose
 }
 
 package() {
 	cd "$builddir"
-	./waf install --destdir="$pkgdir"
+	python3 waf install --destdir="$pkgdir"
 }
 
 sha512sums="6991d848ed9f04a48ca3070efc15af83431f680aa8a8559a02b1666f7b8d43af8e089f78c3b14ad3345dac32fd1c8ad0faf3a3f56dddc07c6f0e0aeef4077498  lv2-1.14.0.tar.bz2"
