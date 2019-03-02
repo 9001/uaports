@@ -1,0 +1,19 @@
+diff -NarU7 mixxx-release-2.1.7/src/sources/soundsourceffmpeg.cpp mixxx-release-2.1.7-mod/src/sources/soundsourceffmpeg.cpp
+--- mixxx-release-2.1.7/src/sources/soundsourceffmpeg.cpp	2019-01-24 21:59:08.000000000 +0100
++++ mixxx-release-2.1.7-mod/src/sources/soundsourceffmpeg.cpp	2019-03-01 19:22:13.896262564 +0100
+@@ -140,14 +140,15 @@
+                 list.append("aiff");
+         } else if (!strcmp(l_SInputFmt->name, "caf")) {
+             list.append("caf");
+         } else if (!strcmp(l_SInputFmt->name, "flac")) {
+             list.append("flac");
+         } else if (!strcmp(l_SInputFmt->name, "ogg")) {
+             list.append("ogg");
++            list.append("opus");
+         } else if (!strcmp(l_SInputFmt->name, "mov,mp4,m4a,3gp,3g2,mj2")) {
+             list.append("m4a");
+             list.append("mp4");
+         } else if (!strcmp(l_SInputFmt->name, "mp4")) {
+             list.append("mp4");
+         } else if (!strcmp(l_SInputFmt->name, "mp3")) {
+             list.append("mp3");

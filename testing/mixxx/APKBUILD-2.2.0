@@ -3,24 +3,24 @@
 # TODO: test on grsec
 # TODO: ensure all dependencies
 pkgname=mixxx
-pkgver=2.1.7
+pkgver=2.2.0
 pkgrel=0
 pkgdesc="DJ / livemixing / radio broadcasting studio"
 url="https://www.mixxx.org/"
 arch="all"
 license="GPL-2.0-or-later"
-depends="icu-libs qt-sqlite"
+depends="icu-libs qt5-qtbase-sqlite"
 depends_dev=""
-makedepends="scons qt-dev upower-dev libusb-dev 
-	chromaprint-dev protobuf-dev glu-dev taglib-dev 
-	libshout-dev libid3tag-dev portaudio-dev portmidi-dev vamp-sdk-dev 
-	ffmpeg-dev libmad-dev libsndfile-dev opusfile-dev opus-dev flac-dev 
-	rubberband-dev icu-libs xvfb qt-sqlite"
+makedepends="scons qt5-qtbase-dev upower-dev libshout-dev libusb-dev
+	libmad-dev
+	libid3tag-dev chromaprint-dev protobuf-dev glu-dev taglib-dev
+	rubberband-dev portaudio-dev portmidi-dev vamp-sdk-dev
+	ffmpeg-dev libsndfile-dev flac-dev icu-libs xvfb qt5-qtbase-sqlite
+	lilv-dev opusfile-dev qt5-qtx11extras-dev qt5-qttools-dev qt5-qtscript-dev qt5-qtsvg-dev"
 install="$pkgname.post-install"
 subpackages="$pkgname-doc"
-source="$pkgname-$pkgver.tar.gz::https://github.com/mixxxdj/mixxx/archive/release-$pkgver.tar.gz
+source="https://github.com/mixxxdj/mixxx/archive/release-$pkgver.tar.gz
 	no-rtsched.patch
-	support-opus.patch
 	bind-duck-to-mic-switch.patch"
 builddir="$srcdir/mixxx-release-$pkgver"
 _scons_args="
@@ -30,12 +30,10 @@ _scons_args="
 	qtdir=/usr
 	test=1
 	mad=1
-	opus=1
 	ffmpeg=1
 	localecompare=1
-	qt_sqlite_plugin=0
 	virtualize=0
-	qt5=0
+	qt5=1
 	-j $JOBS"
 
 build() {
@@ -48,10 +46,10 @@ build() {
 	fi
 	#END DEBUG
 
-	#cd "$startdir"/hacks
-	#find -type f | while IFS= read -r x; do
-	#	cat "$x" > "$builddir/$x"
-	#done
+	cd "$startdir"/hacks
+	find -type f | while IFS= read -r x; do
+		cat "$x" > "$builddir/$x"
+	done
 	
 	cd "$builddir"
 	scons \
@@ -88,7 +86,6 @@ package() {
 	echo snd-seq > "$pkgdir/etc/modules-load.d/mixxx.conf"
 }
 
-sha512sums="976bb76b360ec8a81a6e497d193e7e450afadb66be4c2648a198884a3bafee7efed3b2fa57d0c5cb9bfa216e69e51db588cdc274aaca8dc0f22486949732167a  mixxx-2.1.7.tar.gz
+sha512sums="8174b504d236cde36c636985e0e224915f0be69b13691bf0d88c21087c20c1100ff55561b6e395d97fe5b21a0229fe9ecdac2493cb44fa99a42549c368fa2134  release-2.2.0.tar.gz
 2092c137977f75d1a37c71ed1f2f9dc0ae58ba9437324a535a458009f538b7fc1882701a25ac2af9654a607de5a724bf77e270e85b3157f158be8dc16f5bd195  no-rtsched.patch
-53bbd6981e8f415930f010e02c4e3a84c907d1bc3ae3ba9ec6eec0c65aa6890edee0eaa69d9b18119432523b93ef545a9c5ceb2d3c1887aad144882f753a9f45  support-opus.patch
 05cd55cb3159a1caf6052004a34510853969a7f222fee70064357fe4e6c76864296ead484beed462d3b804637f147dbafc32a97ce3daa1f753da60ffe21cd52d  bind-duck-to-mic-switch.patch"
