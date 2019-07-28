@@ -1,0 +1,46 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+# TODO: ensure all dependencies
+pkgname=xboxdrv
+pkgver=0.8.8
+pkgrel=0
+pkgdesc="userspace xbox gamepad driver"
+url="https://xboxdrv.gitlab.io/"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="scons dbus-glib-dev eudev-dev glib-dev boost-dev linux-headers libusb-dev"
+subpackages="$pkgname-doc"
+source="https://xboxdrv.gitlab.io/$pkgname-linux-$pkgver.tar.bz2"
+builddir="$srcdir/$pkgname-linux-$pkgver"
+
+build() {
+	# START DEBUG
+	#if [ -e "$startdir/src.arc" ]; then
+	#	rm -rf "$srcdir"
+	#	mkdir -p "$srcdir"
+	#	cd "$startdir"
+	#	tar -zxf "$startdir/src.arc"
+	#fi
+	#END DEBUG
+	
+	cd "$builddir"
+	sed -ri 's/(scons)$/\1 -j'$JOBS/ Makefile 
+	make \
+		PREFIX=/usr
+	
+	# START DEBUG
+	#if [ ! -e "$startdir/src.arc" ]; then
+	#	rm "$startdir/src.arc" || true
+	#	tar --xattrs -czf "$startdir/src.arc" -C "$startdir" src
+	#fi
+	# END DEBUG
+}
+
+package() {
+	cd "$builddir"
+	make install \
+		PREFIX=/usr \
+		DESTDIR="$pkgdir"
+}
+
+sha512sums="2978b33d23636431ee0cc393ea32d3d26ebe9f2b914f0bf8bc0e096f98202726768142e653bc5765ac55084b105ff3a6214bdf6e745fdd8aa167260c54c10494  xboxdrv-linux-0.8.8.tar.bz2"
