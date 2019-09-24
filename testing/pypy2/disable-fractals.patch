@@ -1,0 +1,11 @@
+--- pypy2-v6.0.0-src/rpython/tool/ansi_print.py
++++ pypy2-v6.0.0-src-pax/rpython/tool/ansi_print.py
+@@ -67,6 +67,7 @@
+ 
+     def dot(self):
+         """Output a mandelbrot dot to the terminal."""
++        return
+         if not isatty():
+             return
+         global wrote_dot
+ 

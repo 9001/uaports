@@ -1,0 +1,180 @@
+# Contributor: Alexander Edland <s@ocv.me>
+# Maintainer: Alexander Edland <s@ocv.me>
+pkgname=pypy2
+pkgver=6.0.0
+_abi=2.7
+pkgrel=0
+pkgdesc="JIT python2 compiler, (mostly) drop-in replacement for CPython"
+url="https://bitbucket.org/pypy/pypy"
+arch="all"
+license="MIT"
+depends="zlib libbz2 expat sqlite gdbm tk libressl"
+makedepends="libffi-dev pkgconf-dev zlib-dev bzip2-dev expat-dev libressl-dev libunwind-dev paxmark sqlite-dev gdbm-dev tk-dev py2-cffi linux-headers ncurses-dev paxmark"
+install=""
+subpackages="$pkgname-dev $pkgname-dbg $pkgname-tests::noarch $pkgname-wininst::noarch"
+source="https://bitbucket.org/pypy/pypy/downloads/$pkgname-v$pkgver-src.tar.bz2
+	disable-fractals.patch
+	unit-tests.patch
+	paxmark.patch
+	test-stacksize.py"
+builddir="$srcdir/$pkgname-v$pkgver-src"
+_relname="$pkgname-$pkgver-alpine-$CARCH"
+_reldir="$srcdir/rpy_rel"
+
+build() {
+	export CFLAGS="-DTHREAD_STACK_SIZE=0x100000 $CFLAGS"
+
+	# START DEBUG
+	if [ -e "$startdir/src.arc" ]
+	then
+		rm -rf "$srcdir"
+		mkdir -p "$srcdir"
+		cd "$startdir"
+		tar -zxf "$startdir/src.arc"
+		paxmark -zm $builddir/pypy/goal/pypy*-c
+	else
+	#END DEBUG
+
+		# translation and packaging steps are py3 incompatible,
+		# upstream recommends pypy2 for 4x speed and 50% RAM
+		[ -e /usr/bin/pypy2 ] &&
+			_translator=pypy2 ||
+			_translator=python2
+
+		# translate to C
+		cd "$builddir/pypy/goal"
+		$_translator ../../rpython/bin/rpython \
+			--shared \
+			--batch \
+			--make-jobs=1 \
+			--source \
+			-Ojit \
+			targetpypystandalone
+		
+		# providing the --source argument above
+		# makes it possible to compile on machines with 8GB RAM,
+		# however it also results in the following additional steps:
+		cd /tmp/usession-release-pypy2.7-v6.0.0-$(whoami)/testing_1
+		make -j $JOBS
+		mv pypy*-c libpypy-c.so* $builddir/pypy/goal/
+		cd $builddir/pypy/goal
+		./pypy*-c ../tool/build_cffi_imports.py
+
+		# bytecode compilation and packaging
+		cd "$builddir/pypy/tool/release"
+		python2 package.py \
+			--archive-name $pkgname-$pkgver-alpine-$CARCH \
+			--builddir "$_reldir" \
+			--rename_pypy_c $pkgname
+
+		# START DEBUG
+		rm $startdir/src.arc || true
+		tar --xattrs -czf "$startdir/src.arc" -C "$startdir" src
+	fi
+	# END DEBUG
+}
+
+_discard_foreign_platform_modules() {
+	local i
+	for i in \
+		aix3 aix4 atheos beos5 darwin freebsd4 freebsd5 \
+		freebsd6 freebsd7 freebsd8 irix5 irix6 mac \
+		netbsd1 next3 os2emx riscos sunos5 unixware7
+	do
+		rm -rf "$1"/lib-python/$_abi/plat-$i 2>/dev/null || true
+	done
+}
+
+check() {
+	# http://doc.pypy.org/en/latest/coding-guide.html#testing-in-pypy
+
+	# run pypy unit tests using the inlined version of py.test (requires cpython2)
+	cd "$builddir"
+	#python2 pytest.py pypy -v
+	python2 pypy/test_all.py pypy/module/time/ -v -k asctime
+	python2 pypy/test_all.py pypy/module/_ssl/ -v -k test_sslwrap
+
+	# the test environment seen by the pypy binary should match the final apk
+	cd "$_reldir/$_relname"
+	paxmark -zm bin/$pkgname
+	_discard_foreign_platform_modules .
+
+	# test that we reach recursionlimit before we segfault
+	bin/$pkgname "$startdir/test-stacksize.py"
+
+	# run the cpython regression test using our pypy binary
+	#bin/$pkgname "$builddir/pytest.py" "$builddir/pypy"
+	#bin/$pkgname "$builddir/pytest.py" "$builddir/pypy/interpreter"
+	#bin/$pkgname "$builddir/pytest.py" "$builddir/pypy/interpreter/test/test_interpreter.py"
+	bin/$pkgname -m test.regrtest -v
+}
+
+check_1() {
+	# run tests in the same environment as the final apk
+	package
+	cd "$pkgdir/usr/lib/$pkgname"
+
+	# test that we reach recursionlimit before we segfault
+	bin/$pkgname "$startdir/test-stacksize.py"
+
+	# run pypy test suite using the inlined version of py.test
+	#bin/$pkgname "$builddir/pytest.py" lib-python/$_abi/distutils/tests/test_build_ext.py
+	bin/$pkgname "$builddir/pytest.py" lib-python/$_abi/distutils/tests/test_build_ext.py
+}
+
+package() {
+	_archive="$_reldir/$_relname.tar.bz2"
+	_usr_lib="$pkgdir/usr/lib"
+	_usr_bin="$pkgdir/usr/bin"
+
+	mkdir -p "$_usr_lib" "$_usr_bin"
+	tar -jxf "$_archive" -C "$_usr_lib"
+	mv "$_usr_lib/$_relname" "$_usr_lib/$pkgname"
+
+	paxmark -zm "$_usr_lib/$pkgname/bin/$pkgname"
+	# ln -s /usr/lib/$pkgname/bin/$pkgname "$_usr_bin/$pkgname"
+	
+	cd "$_usr_bin"
+	ln -s ../lib/$pkgname/bin/$pkgname .
+
+	# cd "$_usr_bin"
+	# ln -s ../lib/$pkgname/bin/lib$pkgname-c.so .
+
+	cd "$_usr_lib"
+	ln -s $pkgname/bin/lib$pkgname-c.so .
+
+	_discard_foreign_platform_modules "$_usr_lib/$pkgname"
+}
+
+_mv_files() {
+	local i
+	for i in "$@"; do
+		mkdir -p "$subpkgdir"/${i%/*}
+		mv "$pkgdir"/$i "$subpkgdir"/$i
+	done
+}
+
+tests() {
+	pkgdesc="The test modules from the main pypy package"
+	
+	cd "$pkgdir"
+	_mv_files \
+		usr/lib/$pkgname/lib-python/$_abi/*/test \
+		usr/lib/$pkgname/lib-python/$_abi/*/tests \
+		usr/lib/$pkgname/lib-python/$_abi/*/idle_test \
+		usr/lib/$pkgname/lib-python/$_abi/test
+}
+
+wininst() {
+	pkgdesc="The wininst dependencies from the main pypy package"
+
+	cd "$pkgdir"
+	_mv_files \
+		usr/lib/$pkgname/lib-python/$_abi/distutils/command/*.exe
+}
+
+sha512sums="d3bdcd65fc83f2fda3203a604733fe6765049a17cca2715cd6045dc302a6159b4741a821c53fa4c97acf7297cef4c62e941a6a6eb7f8a253a93a28dcf2aa2ca0  pypy2-v6.0.0-src.tar.bz2
+858db7472e60c201f4a3cc0d90ee8ab91a1aa4464ef8991d0291d41f27fe21fdf2a3e2070162312bae73f516f35fed7a24180e1132bfe19b89617723c7ab06bd  disable-fractals.patch
+6586e0135748997b4fb70d5b8da230a8756b7d1d398c7cdae785d448d21598ebe01def3d84e38109f7be0a65c095b13d394aebb62b43fabdd74bec5fa9ec6a0d  unit-tests.patch
+35398493fc935d7ff7d9a424cbcd12ff7b68d75a66086adea58a3f54b290bb6da1607c503e6a6944d956720053dcee3825f18bf56878ff4935e27b32ecc74ec2  paxmark.patch
+343746e877c48c8e177003a895ee58fd299c82676633c3e32607f5c01a404b41de0e55c530854b1bb88c3e65dbbdff94774cd0d083cb637b71ae9235f05c4ee6  test-stacksize.py"

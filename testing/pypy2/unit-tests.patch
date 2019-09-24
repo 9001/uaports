@@ -1,0 +1,33 @@
+diff -NarU3 pypy2-v6.0.0-org/pypy/module/_cffi_backend/test/_backend_test_c.py pypy2-v6.0.0-mod/pypy/module/_cffi_backend/test/_backend_test_c.py
+--- pypy2-v6.0.0-org/pypy/module/_cffi_backend/test/_backend_test_c.py	2018-04-24 08:04:29.000000000 +0200
++++ pypy2-v6.0.0-mod/pypy/module/_cffi_backend/test/_backend_test_c.py	2018-07-15 12:01:40.170816352 +0200
+@@ -1214,8 +1214,7 @@
+ def test_read_variable():
+     ## FIXME: this test assumes glibc specific behavior, it's not compliant with C standard
+     ## https://bugs.pypy.org/issue1643
+-    if not sys.platform.startswith("linux"):
+-        py.test.skip("untested")
++    py.test.skip("untested")
+     BVoidP = new_pointer_type(new_void_type())
+     ll = find_and_load_library('c')
+     stderr = ll.read_variable(BVoidP, "stderr")
+@@ -1227,8 +1226,7 @@
+ def test_read_variable_as_unknown_length_array():
+     ## FIXME: this test assumes glibc specific behavior, it's not compliant with C standard
+     ## https://bugs.pypy.org/issue1643
+-    if not sys.platform.startswith("linux"):
+-        py.test.skip("untested")
++    py.test.skip("untested")
+     BCharP = new_pointer_type(new_primitive_type("char"))
+     BArray = new_array_type(BCharP, None)
+     ll = find_and_load_library('c')
+@@ -1239,8 +1237,7 @@
+ def test_write_variable():
+     ## FIXME: this test assumes glibc specific behavior, it's not compliant with C standard
+     ## https://bugs.pypy.org/issue1643
+-    if not sys.platform.startswith("linux"):
+-        py.test.skip("untested")
++    py.test.skip("untested")
+     BVoidP = new_pointer_type(new_void_type())
+     ll = find_and_load_library('c')
+     stderr = ll.read_variable(BVoidP, "stderr")

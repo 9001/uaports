@@ -1,0 +1,33 @@
+--- pypy3-v6.0.0-src/rpython/translator/driver.py
++++ pypy3-v6.0.0-src-pax/rpython/translator/driver.py
+@@ -1,6 +1,7 @@
+ import sys, os
+ import os.path
+ import shutil
++import subprocess
+ 
+ from rpython.translator.translator import TranslationContext
+ from rpython.translator.tool.taskengine import SimpleTaskEngine
+@@ -509,6 +510,14 @@
+             self.c_entryp = newexename
+         self.log.info("created: %s" % (self.c_entryp,))
+ 
++    def paxmark_exe(self):
++        """ Allow the created executable to run on hardened kernels
++        """
++        subprocess.check_call(
++            ['paxmark', '-zm', str(self.c_entryp)])
++        
++        self.log.info("paxmarked: %s" % (self.c_entryp,))
++
+     @taskdef(['source_c'], "Compiling c source")
+     def task_compile_c(self):
+         """ Compile the generated C code using either makefile or
+@@ -523,6 +532,7 @@
+         if self.standalone:
+             self.c_entryp = cbuilder.executable_name
+             self.create_exe()
++            self.paxmark_exe()
+         else:
+             self.c_entryp = cbuilder.get_entry_point()
+ 

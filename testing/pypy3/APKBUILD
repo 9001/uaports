@@ -1,0 +1,163 @@
+# Contributor: Alexander Edland <s@ocv.me>
+# Contributor: Jamie Hewland <jhewland@gmail.com>
+# Maintainer: Alexander Edland <s@ocv.me>
+pkgname=pypy3
+pkgver=6.0.0
+_abi=3
+pkgrel=0
+pkgdesc="JIT python3 compiler, (mostly) drop-in replacement for CPython"
+url="https://bitbucket.org/pypy/pypy"
+arch="all"
+license="MIT"
+depends="zlib libbz2 xz expat sqlite gdbm tk openssl"
+makedepends="libffi-dev pkgconf-dev zlib-dev bzip2-dev xz-dev expat-dev openssl-dev libunwind-dev paxmark sqlite-dev gdbm-dev tk-dev py2-cffi linux-headers ncurses-dev paxmark"
+install=""
+subpackages="$pkgname-dev $pkgname-dbg $pkgname-tests::noarch $pkgname-wininst::noarch"
+source="https://bitbucket.org/pypy/pypy/downloads/$pkgname-v$pkgver-src.tar.bz2
+	disable-fractals.patch
+	paxmark.patch
+	rfile-const-stdio.patch
+	remove-ndbm.patch
+	curses-wchar-h.patch
+	test-stacksize.py"
+builddir="$srcdir/$pkgname-v$pkgver-src"
+_relname="$pkgname-$pkgver-alpine-$CARCH"
+_reldir="$srcdir/rpy_rel"
+
+build() {
+	export CFLAGS="-DTHREAD_STACK_SIZE=0x100000 $CFLAGS"
+
+	# START DEBUG
+	if [ -e "$startdir/src.arc" ]
+	then
+		rm -rf "$srcdir"
+		mkdir -p "$srcdir"
+		cd "$startdir"
+		tar -zxf "$startdir/src.arc"
+		paxmark -zm $builddir/pypy/goal/pypy*-c
+	else
+	#END DEBUG
+
+		# translation and packaging steps are py3 incompatible,
+		# upstream recommends pypy2 for 4x speed and 50% RAM
+		[ -e /usr/bin/pypy2 ] &&
+			_translator=pypy2 ||
+			_translator=python2
+
+		cd "$builddir/pypy/goal"
+		$_translator ../../rpython/bin/rpython \
+			--shared \
+			--batch \
+			--make-jobs=$JOBS \
+			-Ojit \
+			targetpypystandalone
+
+		# START DEBUG
+		#tar --xattrs -czf "$startdir/src.arc" -C "$startdir" src
+	fi
+	# END DEBUG
+
+	cd "$builddir/pypy/tool/release"
+	python2 package.py \
+		--archive-name $pkgname-$pkgver-alpine-$CARCH \
+		--builddir "$_reldir" \
+		--rename_pypy_c $pkgname
+}
+
+_discard_foreign_platform_modules() {
+	local i
+	for i in \
+		aix3 aix4 atheos beos5 darwin freebsd4 freebsd5 \
+		freebsd6 freebsd7 freebsd8 irix5 irix6 mac \
+		netbsd1 next3 os2emx riscos sunos5 unixware7
+	do
+		rm -rf "$1"/lib-python/$_abi/plat-$i 2>/dev/null || true
+	done
+}
+
+check() {
+	cd "$_reldir/$_relname"
+	paxmark -zm bin/$pkgname
+
+	# test environment should match the final apk
+	_discard_foreign_platform_modules .
+
+	# test that we reach recursionlimit before we segfault
+	bin/$pkgname "$startdir/test-stacksize.py"
+
+	# run pypy test suite using the inlined version of py.test
+	#bin/$pkgname "$builddir/pytest.py" "$builddir/pypy/interpreter"
+	bin/$pkgname "$builddir/pytest.py" "$builddir/pypy/interpreter/test/test_interpreter.py"
+}
+
+check_1() {
+	# run tests in the same environment as the final apk
+	package
+	cd "$pkgdir/usr/lib/$pkgname"
+
+	# test that we reach recursionlimit before we segfault
+	bin/$pkgname "$startdir/test-stacksize.py"
+
+	# run pypy test suite using the inlined version of py.test
+	#bin/$pkgname "$builddir/pytest.py" lib-python/$_abi/distutils/tests/test_build_ext.py
+	bin/$pkgname "$builddir/pytest.py" lib-python/$_abi/distutils/tests/test_build_ext.py
+}
+
+package() {
+	_archive="$_reldir/$_relname.tar.bz2"
+	_usr_lib="$pkgdir/usr/lib"
+	_usr_bin="$pkgdir/usr/bin"
+
+	mkdir -p "$_usr_lib" "$_usr_bin"
+	tar -jxf "$_archive" -C "$_usr_lib"
+	mv "$_usr_lib/$_relname" "$_usr_lib/$pkgname"
+
+	paxmark -zm "$_usr_lib/$pkgname/bin/$pkgname"
+	# ln -s /usr/lib/$pkgname/bin/$pkgname "$_usr_bin/$pkgname"
+	
+	cd "$_usr_bin"
+	ln -s ../lib/$pkgname/bin/$pkgname .
+
+	# cd "$_usr_bin"
+	# ln -s ../lib/$pkgname/bin/lib$pkgname-c.so .
+
+	cd "$_usr_lib"
+	ln -s $pkgname/bin/lib$pkgname-c.so .
+
+	_discard_foreign_platform_modules "$_usr_lib/$pkgname"
+}
+
+_mv_files() {
+	local i
+	for i in "$@"; do
+		mkdir -p "$subpkgdir"/${i%/*}
+		mv "$pkgdir"/$i "$subpkgdir"/$i
+	done
+}
+
+tests() {
+	pkgdesc="The test modules from the main pypy package"
+	
+	cd "$pkgdir"
+	_mv_files \
+		usr/lib/$pkgname/lib-python/$_abi/*/test \
+		usr/lib/$pkgname/lib-python/$_abi/*/tests \
+		usr/lib/$pkgname/lib-python/$_abi/*/idle_test \
+		usr/lib/$pkgname/lib-python/$_abi/test
+}
+
+wininst() {
+	pkgdesc="The wininst dependencies from the main pypy package"
+
+	cd "$pkgdir"
+	_mv_files \
+		usr/lib/$pkgname/lib-python/$_abi/distutils/command/*.exe
+}
+
+sha512sums="ea406c4dd1837a6ab13026de01330790f3c18f6e2bfb83e8553e52acf78b43dfb559ce75c2d91395055c771db359356c8183ed950da6f01a21bf09128935af5e  pypy3-v6.0.0-src.tar.bz2
+fe884301dac78031f1403251fa1539dce0126f90271b1cafece0beb8745f898f73a85de8665fc2e721382d2e513a534ee6e8d1ac79057d9a18b60ee12d43219e  disable-fractals.patch
+ee2b70ae818c345c321615889fa3bb4abc297f48db9b24c48b59e563a058f8eff7a183e3c282b6f9e575a2e6b54b39345885500d7222b5ffd1c6d4ec4aa6474d  paxmark.patch
+14718361954beb31afe3edb440a05b6d1ec656acae152b0fd9c81028df2b1c0c4c45eac100c4740f24dbf2db8019bc90d0a75cafe70dfeee1d11c52a97940f09  rfile-const-stdio.patch
+cbb2030be8882ce632367d49c3ec6895369a894c90532d8c3f20b4b0cdbd1b94c5b3473c4c7dcb462fa3961c1aa2488e8240f7dbdf78ac3400bfaa0114c9599d  remove-ndbm.patch
+a6c746bc65b53f5fc7600f613c0cf94e083a88a4f8344c4d5e289476452b99c2f361c9ebd2cc6daffe2532de6790d1350c62079ffe5db039d5652acef45b6be4  curses-wchar-h.patch
+343746e877c48c8e177003a895ee58fd299c82676633c3e32607f5c01a404b41de0e55c530854b1bb88c3e65dbbdff94774cd0d083cb637b71ae9235f05c4ee6  test-stacksize.py"
