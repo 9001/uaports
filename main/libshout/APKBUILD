@@ -1,0 +1,42 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=libshout
+pkgver=2.4.3
+pkgrel=420
+pkgdesc="Library for accessing a shoutcast/icecast server"
+url="https://icecast.org/"
+arch="all"
+license="GPL-2.0-only"
+makedepends="speex-dev libtheora-dev libvorbis-dev openssl-dev"
+subpackages="$pkgname-static $pkgname-doc $pkgname-dev"
+source=""
+builddir="$startdir/src/icecast-libshout/"
+
+prepare() {
+	cd src
+	git clone --recursive \
+		https://gitlab.xiph.org/xiph/icecast-libshout.git
+}
+
+build() {
+	cd "$builddir"
+	./autogen.sh
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--with-openssl
+	make LDFLAGS+=-lspeex
+}
+
+check() {
+	cd "$builddir"
+	make check
+}
+
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir" install
+}

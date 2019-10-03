@@ -24,7 +24,8 @@ subpackages="$pkgname-doc"
 source="$pkgname-$pkgver.tar.gz::https://github.com/mixxxdj/mixxx/archive/release-$pkgver.tar.gz
 	no-rtsched.patch
 	support-opus.patch
-	bind-duck-to-mic-switch.patch"
+	bind-duck-to-mic-switch.patch
+	safer-tag-separation-in-window-title.patch"
 builddir="$srcdir/mixxx-release-$pkgver"
 _scons_args="
 	optimize=portable
@@ -89,4 +90,5 @@ package() {
 sha512sums="3b9365bd9d9a7d387cd8791d7d9f6315116e04322370db103998d5e055a6de5e159a4605c7de96cbcf13e7d0653cbe53140dca18a8c3f1b688b227be2c4aeb6f  mixxx-2.2.2.tar.gz
 2092c137977f75d1a37c71ed1f2f9dc0ae58ba9437324a535a458009f538b7fc1882701a25ac2af9654a607de5a724bf77e270e85b3157f158be8dc16f5bd195  no-rtsched.patch
 53bbd6981e8f415930f010e02c4e3a84c907d1bc3ae3ba9ec6eec0c65aa6890edee0eaa69d9b18119432523b93ef545a9c5ceb2d3c1887aad144882f753a9f45  support-opus.patch
-05cd55cb3159a1caf6052004a34510853969a7f222fee70064357fe4e6c76864296ead484beed462d3b804637f147dbafc32a97ce3daa1f753da60ffe21cd52d  bind-duck-to-mic-switch.patch"
+05cd55cb3159a1caf6052004a34510853969a7f222fee70064357fe4e6c76864296ead484beed462d3b804637f147dbafc32a97ce3daa1f753da60ffe21cd52d  bind-duck-to-mic-switch.patch
+ab1b7278c7d1b3a72eae2527847c3ee63df775470f3dc009930eeeb637c64b3c8ef2c73b2b1643b332ba5e26c2859e921cb5ccdcfeeadeadebe55f0085fd3813  safer-tag-separation-in-window-title.patch"
