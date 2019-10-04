@@ -1,0 +1,31 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Maintainer: Alexander Edland <alpine@ocv.me>
+pkgname=bambootracker
+pkgver=0.2.4
+pkgrel=0
+pkgdesc="FM tracker"
+url="https://github.com/rerrahkr/BambooTracker"
+arch="all"
+license="GPL-2.0"
+options="!check"
+makedepends="qt5-qttools-dev qt5-qtbase-dev qt5-qtmultimedia-dev"
+source="bt.tgz::https://github.com/rerrahkr/BambooTracker/archive/v$pkgver.tar.gz"
+builddir="$srcdir/BambooTracker"
+
+prepare() {
+	mv "$builddir"-* "$builddir"
+	default_prepare
+}
+
+build() {
+	cd "$builddir/BambooTracker"
+	/usr/lib/qt5/bin/qmake CONFIG+=release PREFIX="$pkgdir"
+	make
+}
+
+package() {
+	cd "$builddir/BambooTracker"
+	make install
+}
+
+sha512sums="051dbe445d005428c41d14c2069929961813515ee478137b2a77db6b1d21cd9843a4a7364cebb970b0114bf974c52f2b9e179ad51b700378ed8f02cab3bfcfe3  bt.tgz"
