@@ -1,0 +1,45 @@
+diff -NarU3 mixxx-release-2.2.2-1/src/preferences/dialog/dlgprefrecord.cpp mixxx-release-2.2.2/src/preferences/dialog/dlgprefrecord.cpp
+--- mixxx-release-2.2.2-1/src/preferences/dialog/dlgprefrecord.cpp	2019-08-10 15:52:45.000000000 +0200
++++ mixxx-release-2.2.2/src/preferences/dialog/dlgprefrecord.cpp	2019-10-23 18:04:08.706026714 +0200
+@@ -71,6 +71,7 @@
+             (bool) m_pConfig->getValueString(ConfigKey(RECORDING_PREF_KEY, "CueEnabled")).toInt());
+ 
+     // Setting split
++    comboBoxSplitting->addItem(SPLIT_16MB);
+     comboBoxSplitting->addItem(SPLIT_650MB);
+     comboBoxSplitting->addItem(SPLIT_700MB);
+     comboBoxSplitting->addItem(SPLIT_1024MB);
+diff -NarU3 mixxx-release-2.2.2-1/src/recording/defs_recording.h mixxx-release-2.2.2/src/recording/defs_recording.h
+--- mixxx-release-2.2.2-1/src/recording/defs_recording.h	2019-08-10 15:52:45.000000000 +0200
++++ mixxx-release-2.2.2/src/recording/defs_recording.h	2019-10-23 17:58:40.259480725 +0200
+@@ -14,6 +14,7 @@
+ #define RECORD_SPLIT_CONTINUE 3.0
+ 
+ //File options for preferences Splitting
++#define SPLIT_16MB "16 MB"
+ #define SPLIT_650MB "650 MB (CD)"
+ #define SPLIT_700MB "700 MB (CD)"
+ #define SPLIT_1024MB "1 GB"
+@@ -26,6 +27,7 @@
+ 
+ // Byte conversions. Slightly rounded to leave enough room to add
+ // closing frames by the encoder. All sizes are in bytes.
++#define SIZE_16MB   Q_UINT64_C(16777216)
+ #define SIZE_650MB  Q_UINT64_C(680000000)
+ #define SIZE_700MB  Q_UINT64_C(730000000)
+ #define SIZE_1GB    Q_UINT64_C(1070000000)
+diff -NarU3 mixxx-release-2.2.2-1/src/recording/recordingmanager.cpp mixxx-release-2.2.2/src/recording/recordingmanager.cpp
+--- mixxx-release-2.2.2-1/src/recording/recordingmanager.cpp	2019-08-10 15:52:45.000000000 +0200
++++ mixxx-release-2.2.2/src/recording/recordingmanager.cpp	2019-10-23 18:03:38.085735646 +0200
+@@ -339,8 +339,10 @@
+          return SIZE_4GB; //Ignore size limit. use time limit
+      else if(fileSizeStr == SPLIT_120MIN)
+          return SIZE_4GB; //Ignore size limit. use time limit
++     else if(fileSizeStr == SPLIT_16MB)
++         return SIZE_16MB;
+      else
+-         return SIZE_650MB;
++         return SIZE_16MB;
+ }
+ unsigned int RecordingManager::getFileSplitSeconds()
+ {
