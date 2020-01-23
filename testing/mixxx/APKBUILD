@@ -3,7 +3,7 @@
 # TODO: test on grsec
 # TODO: ensure all dependencies
 pkgname=mixxx
-pkgver=2.2.2
+pkgver=2.2.3
 pkgrel=0
 pkgdesc="DJ / livemixing / radio broadcasting studio"
 url="https://www.mixxx.org/"
@@ -46,10 +46,11 @@ _scons_args="
 build() {
 	# START DEBUG
 	if [ -e "$startdir/src.arc" ]; then
-		rm -rf "$srcdir"
+		#rm -rf "$srcdir"
 		mkdir -p "$srcdir"
 		cd "$startdir"
-		tar -zxf "$startdir/src.arc"
+		tar -jxf "$startdir/src.arc"
+		return 0
 	fi
 	#END DEBUG
 
@@ -61,7 +62,7 @@ build() {
 	# START DEBUG
 	if [ ! -e "$startdir/src.arc" ]; then
 		rm "$startdir/src.arc" || true
-		tar --xattrs -cC "$startdir" src | pigz -c > "$startdir/src.arc"
+		tar --xattrs -cC "$startdir" src | lbzip2 -cu > "$startdir/src.arc"
 	fi
 	# END DEBUG
 }
@@ -86,9 +87,12 @@ package() {
 	# snd-seq provides /dev/snd/seq for midi controllers
 	mkdir -p "$pkgdir/etc/modules-load.d"
 	echo snd-seq > "$pkgdir/etc/modules-load.d/mixxx.conf"
+	
+	ls -al /home/ed/dev/uaports/testing/mixxx/pkg/mixxx/usr/share/doc || true
+	ls -al /home/ed/dev/uaports/testing/mixxx/pkg/mixxx-doc/usr/share/doc || true
 }
 
-sha512sums="3b9365bd9d9a7d387cd8791d7d9f6315116e04322370db103998d5e055a6de5e159a4605c7de96cbcf13e7d0653cbe53140dca18a8c3f1b688b227be2c4aeb6f  mixxx-2.2.2.tar.gz
+sha512sums="dfa4f9ccb7d8aa486167a01e54ee5ebeb3655a4f63c7c163b66f0dd25a21f309eae3a213d253cc37ef501777961028932a9d4ac71f5befd54daca2bd2326b395  mixxx-2.2.3.tar.gz
 2092c137977f75d1a37c71ed1f2f9dc0ae58ba9437324a535a458009f538b7fc1882701a25ac2af9654a607de5a724bf77e270e85b3157f158be8dc16f5bd195  no-rtsched.patch
 4abb19348dd6ff85bce92aa10988e2a4aa709492142bf280ec2808d9129a7f665e3bcae9a5d36c602be5a330352320e6d922229ee1b406de60da97195048dfa2  split-16mb.patch
 53bbd6981e8f415930f010e02c4e3a84c907d1bc3ae3ba9ec6eec0c65aa6890edee0eaa69d9b18119432523b93ef545a9c5ceb2d3c1887aad144882f753a9f45  support-opus.patch

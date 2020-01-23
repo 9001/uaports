@@ -3,12 +3,12 @@ set -e
 
 build() {
 	printf '\033[35m\nbuild %s\033[0m\n' $1
-	cd ~/aports/*/$1
+	cd ~/dev/uaports/*/$1
 	rm -rf src pkg
 	t1=$(date +%s)
 	(
 		set -o pipefail
-		nice abuild -r 2>&1 | tee .buildlog
+		nice abuild -cr 2>&1 | tee .buildlog
 	)
 	t2=$(date +%s)
 	echo $t1 $t2 $((t2-t1)) | tee -a .buildtime
@@ -25,8 +25,6 @@ install() {
 	sudo apk add $(cat /tmp/ilist)
 }
 
-true ||
-{
 # apk del $(cat /etc/apk/world | grep -vE '^alpine-' | sed -r 's/>.*//'); cat /etc/apk/world
 
 echo
@@ -52,8 +50,8 @@ build py3-pgen
 #install py2-pgen
 #install py3-pgen
 #install vamp-sdk
-}
 build py-cython
+}
 build rubberband
 
 # 3rd level
@@ -61,6 +59,11 @@ build rubberband
 #install py-cython-dev
 #install rubberband
 #install zimg
+build lv2
+build serd
+build sord
+build sratom
+build lilv
 build mixxx
 build vapoursynth
 
@@ -74,7 +77,6 @@ build vapoursynth-deblock264
 build vapoursynth-deblockpp7
 build vapoursynth-editor
 build vapoursynth-eedi3m
-}
 build vapoursynth-ffms2
 build vapoursynth-fieldhint
 build vapoursynth-fmtconv
