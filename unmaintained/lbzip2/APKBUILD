@@ -1,0 +1,30 @@
+# Contributor: Justin Menga <justin.menga@gmail.com>
+# Maintainer: e <e@e.e>
+pkgname=lbzip2
+pkgver=2.5
+pkgrel=1
+pkgdesc="A parallel bzip2 compression utility"
+url="http://lbzip2.org"
+arch="all"
+license="GPL-3.0-or-later"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.bz2::http://deb.debian.org/debian/pool/main/l/$pkgname/${pkgname}_$pkgver.orig.tar.bz2"
+
+builddir="$srcdir"/$pkgname-$pkgver
+
+build() {
+	cd "$builddir"
+	./configure --prefix=/usr
+	make
+}
+
+check() {
+	cd "$builddir"
+	make check
+}
+
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir/" install
+}
+sha512sums="63468178604df926bd2071c23b068bddcb6fcab54bac92a149224c5ed99a38cc7e8366ae21eecf12ad9c1a193827ef627d2517ac9a7a65791a959dfcacd96127  lbzip2-2.5.tar.bz2"
